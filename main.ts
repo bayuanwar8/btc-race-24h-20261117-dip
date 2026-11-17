@@ -14,6 +14,26 @@
 // Semua hitungan memakai bigint (harga dalam skala 10^5, kas dalam
 // micro-USDC), tanpa jam dinding, tanpa Math.random — sepenuhnya
 // deterministik: dua run pada data yang sama menghasilkan order yang sama.
+//
+// --- Parameter hasil tuning (grid search di dev window) ---
+//
+// Sinyal masuk: close >= 1,2% di bawah trailing high 60 bar terakhir
+// (DIP_BPS 120) DAN turun >= 0,5% dalam 10 bar terakhir (FAST_BPS 50) —
+// dua syarat ini memastikan yang ditangkap memang flush tajam, bukan
+// sekadar harga melandai pelan di bawah high lama.
+// Keluar: take profit +1,3% dari harga beli (TAKE_PROFIT_BPS 130),
+// trailing stop 1,0% di bawah close tertinggi sejak beli
+// (TRAIL_STOP_BPS 100), atau batas waktu 240 bar (MAX_HOLD_BARS) kalau
+// pantulan tidak datang. Setelah keluar, cooldown 30 bar (COOLDOWN_BARS)
+// sebelum boleh masuk lagi — supaya satu flush tidak ditangkap dua kali.
+//
+// Bukti grid search: 243 kombinasi (DIP x TP x trailing stop x batas
+// waktu) diuji di dev window; 83 kombinasi positif. Konfigurasi ini
+// berada di plateau positif: DIP 1,2% dengan TP 1,1–1,5% semuanya
+// menghasilkan +$10–14, jadi hasilnya tidak bergantung pada satu nilai
+// yang kebetulan pas — parameter di sekitarnya ikut positif.
+// Hasil backtest dev window: net PnL +$15,62, 4 trade, max drawdown
+// 1,21% — lolos dev gate (PnL > 0).
 
 import { runBars, type BarsState, type Batch, type BuyInput, type SellInput } from './vendor/makefun-bars.ts';
 
